@@ -28,7 +28,7 @@ class AppDrawer extends StatelessWidget {
                 _buildSubDrawerItem(text: 'Recharge', onTap: () {}),
               ],
             ),
-             _buildExpansionTile(
+            _buildExpansionTile(
               icon: Icons.savings_outlined,
               title: 'Save',
               subtitle: 'Accounts, Deposits, Safe Deposit Lockers',
@@ -39,12 +39,10 @@ class AppDrawer extends StatelessWidget {
                 _buildSubDrawerItem(text: 'Deposits', onTap: () {
                   Navigator.pushNamed(context, '/deposits');
                 }),
-                _buildSubDrawerItem(text: 'Safe Deposit Lockers', onTap: () {
-                  Navigator.pushNamed(context, '/safe_deposit_lockers');
-                }),
+                _buildSubDrawerItem(text: 'Safe Deposit Lockers', onTap: () {}),
               ],
             ),
-             _buildExpansionTile(
+            _buildExpansionTile(
               icon: Icons.trending_up,
               title: 'Invest',
               subtitle: 'Demat, Mutual Fund',
@@ -54,7 +52,7 @@ class AppDrawer extends StatelessWidget {
               ],
             ),
             const Divider(),
-             _buildDrawerItem(
+            _buildDrawerItem(
               icon: Icons.person_outline,
               text: 'Your Profile',
               onTap: () {},
@@ -70,7 +68,7 @@ class AppDrawer extends StatelessWidget {
               onTap: () => Navigator.pushReplacementNamed(context, '/login'),
             ),
             const SizedBox(height: 40),
-             Align(
+            Align(
               alignment: Alignment.bottomCenter,
               child: Text(
                 'App Version 1.0.0',
@@ -80,7 +78,7 @@ class AppDrawer extends StatelessWidget {
                 ),
               ),
             ),
-             const SizedBox(height: 20),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -153,7 +151,7 @@ class AppDrawer extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildExpansionTile({
     required IconData icon,
     required String title,

@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "763173493913",
+    "firebase_url": "https://canra-bank-hackathon-default-rtdb.firebaseio.com",
+    "project_id": "canra-bank-hackathon",
+    "storage_bucket": "canra-bank-hackathon.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:763173493913:android:7ccdf13b9899d50505ec08",
+        "android_client_info": {
+          "package_name": "com.example.raksha"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCDPF9ui1SM1D_J3R88bTOPp4i26j-vY9Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -10,6 +11,29 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool _isPasswordObscured = true;
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  String? _errorMessage;
+  bool _isLoading = false;
+  bool _firebaseAvailable = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkFirebaseAvailability();
+  }
+
+  void _checkFirebaseAvailability() {
+    final box = Hive.box('behaviorData');
+    _firebaseAvailable = box.get('firebaseAvailable', defaultValue: false);
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,10 +107,33 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: Colors.grey[600],
                         ),
                       ),
+                      if (!_firebaseAvailable) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade100,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.orange.shade300),
+                          ),
+                          child: Text(
+                            'Demo Mode: Any credentials will work',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.orange.shade800,
+                            ),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 32),
-                      _buildUsernameField(),
+                      _buildEmailField(),
                       const SizedBox(height: 16),
                       _buildPasswordField(),
+                      if (_errorMessage != null) ...[
+                        const SizedBox(height: 12),
+                        Text(_errorMessage!, style: const TextStyle(color: Colors.red), textAlign: TextAlign.center),
+                      ],
                       const SizedBox(height: 24),
                       _buildLoginButton(),
                       const SizedBox(height: 16),
@@ -104,11 +151,13 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildUsernameField() {
+  Widget _buildEmailField() {
     return TextField(
+      controller: _emailController,
+      keyboardType: TextInputType.emailAddress,
       decoration: InputDecoration(
-        labelText: 'Username',
-        prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF667EEA)),
+        labelText: 'Email',
+        prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF667EEA)),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.grey.shade300),
@@ -129,6 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildPasswordField() {
     return TextField(
+      controller: _passwordController,
       obscureText: _isPasswordObscured,
       decoration: InputDecoration(
         labelText: 'Password',
@@ -161,10 +211,33 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-  
+
   Widget _buildForgotPassword() {
     return TextButton(
-      onPressed: () {},
+      onPressed: () async {
+        if (_emailController.text.isNotEmpty) {
+          if (_firebaseAvailable) {
+            try {
+              await FirebaseAuth.instance.sendPasswordResetEmail(email: _emailController.text.trim());
+              setState(() {
+                _errorMessage = 'Password reset email sent!';
+              });
+            } catch (e) {
+              setState(() {
+                _errorMessage = 'Failed to send reset email.';
+              });
+            }
+          } else {
+            setState(() {
+              _errorMessage = 'Password reset not available in demo mode.';
+            });
+          }
+        } else {
+          setState(() {
+            _errorMessage = 'Enter your email to reset password.';
+          });
+        }
+      },
       child: const Text(
         'Forgot Password?',
         style: TextStyle(color: Color(0xFF667EEA), fontWeight: FontWeight.bold),
@@ -174,10 +247,35 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildLoginButton() {
     return ElevatedButton(
-      onPressed: () async {
-        final box = Hive.box('behaviorData');
-        await box.put('loginTime', DateTime.now().toIso8601String());
-        Navigator.pushReplacementNamed(context, '/home');
+      onPressed: _isLoading ? null : () async {
+        setState(() { _isLoading = true; _errorMessage = null; });
+
+        try {
+          if (_firebaseAvailable) {
+            // Real Firebase authentication
+            await FirebaseAuth.instance.signInWithEmailAndPassword(
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+            );
+          } else {
+            // Demo mode - accept any credentials
+            await Future.delayed(const Duration(seconds: 1)); // Simulate network delay
+          }
+
+          final box = Hive.box('behaviorData');
+          await box.put('loginTime', DateTime.now().toIso8601String());
+          Navigator.pushReplacementNamed(context, '/home');
+        } on FirebaseAuthException catch (e) {
+          setState(() {
+            _errorMessage = e.message;
+          });
+        } catch (e) {
+          setState(() {
+            _errorMessage = 'Login failed. Please try again.';
+          });
+        } finally {
+          setState(() { _isLoading = false; });
+        }
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFF667EEA),
@@ -188,7 +286,9 @@ class _LoginScreenState extends State<LoginScreen> {
         elevation: 5,
         shadowColor: const Color(0xFF667EEA).withOpacity(0.4),
       ),
-      child: const Text(
+      child: _isLoading
+          ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+          : const Text(
         'Login',
         style: TextStyle(
           fontSize: 18,
@@ -208,7 +308,9 @@ class _LoginScreenState extends State<LoginScreen> {
           style: TextStyle(color: Colors.white.withOpacity(0.9)),
         ),
         TextButton(
-          onPressed: () {},
+          onPressed: () {
+            Navigator.pushNamed(context, '/register');
+          },
           style: TextButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             minimumSize: const Size(50, 30),
